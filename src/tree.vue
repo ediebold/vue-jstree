@@ -118,6 +118,7 @@
                     this.icon = item.icon || ''
                     this.opened = item.opened || collapse
                     this.selected = item.selected || false
+                    this.indeterminate = item.indeterminate || false
                     this.disabled = item.disabled || false
                     this.loading = item.loading || false
                     this[childrenFieldName] = item[childrenFieldName] || []

@@ -107,6 +107,32 @@
                   this.handleGroupMaxHeight()
               },
               deep: true
+          },
+        //   'model.children': {
+        //       handler: function (val, oldVal) {
+        //           this.checkIndeterminate();
+        //       },
+        //       immediate: true,
+        //   },
+          'model.selected': {
+              handler: function (val, oldVal) {
+                  if (this.model.indeterminate) {
+                    this.model.indeterminate = false;
+                    return;
+                  }
+                  if (this.$parent.$options._componentTag === 'tree-item') {
+                    this.$parent.checkIndeterminate();
+                  }
+              },
+              immediate: true,
+          },
+          'model.indeterminate': {
+              handler: function (val, oldVal) {
+                  if (this.$parent.$options._componentTag === 'tree-item') {
+                    this.$parent.checkIndeterminate();
+                  }
+              },
+              immediate: true,
           }
       },
       computed: {
@@ -121,6 +147,7 @@
                   {'tree-leaf': !this.isFolder},
                   {'tree-loading': !!this.model.loading},
                   {'tree-drag-enter': this.isDragEnter},
+                  {'tree-indeterminate': this.model.indeterminate},
                   {[this.klass]: !!this.klass}
               ]
           },
@@ -166,7 +193,7 @@
                   'transition-property': !!this.allowTransition ? 'max-height' : '',
                   'display': !!this.allowTransition ? 'block' : (this.model.opened ? 'block' : 'none')
               }
-          }
+          },
       },
       methods: {
           handleItemToggle (e) {
@@ -205,6 +232,25 @@
           handleItemDrop (e, oriNode, oriItem) {
               this.$el.style.backgroundColor = "inherit"
               this.onItemDrop(e, oriNode, oriItem)
+          },
+          checkIndeterminate() {
+            if (!this.isFolder) return;
+            let firstDone = false;
+            let state = false;
+            for (let child of this.$children) {
+                if (child.model.indeterminate || (firstDone && child.model.selected != state)) {
+                    //TODO: come up with a better way to do this that doesn't involve checking parents twice.
+                    this.model.selected = false;
+                    this.model.indeterminate = true;
+                    return;
+                } else if (!firstDone) {
+                    firstDone = true;
+                    state = child.model.selected;
+                    continue;
+                }
+            }
+            this.model.indeterminate = false;
+            this.model.selected = state;
           }
       },
       created () {
