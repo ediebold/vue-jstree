@@ -11,7 +11,7 @@
         <div role="presentation" :class="wholeRowClasses" v-if="isWholeRow">&nbsp;</div>
         <i class="tree-icon tree-ocl" role="presentation" @click="handleItemToggle"></i>
         <div :class="anchorClasses" v-on="events">
-            <i class="tree-icon tree-checkbox" role="presentation" v-if="showCheckbox && !model.loading"></i>
+            <i class="tree-icon tree-checkbox" role="presentation" v-if="showCheckbox && !model.loading" @click="handleCheckboxClick"></i>
             <slot :vm="this" :model="model">
                 <i :class="themeIconClasses" role="presentation" v-if="!model.loading"></i>
                 <span v-html="model[textFieldName]"></span>
@@ -108,12 +108,15 @@
               },
               deep: true
           },
-        //   'model.children': {
-        //       handler: function (val, oldVal) {
-        //           this.checkIndeterminate();
-        //       },
-        //       immediate: true,
-        //   },
+          'model.children': {
+              handler: function (val, oldVal) {
+                  // For some reason, these are what we get when a node is deleted.
+                  if (oldVal && val.length == 0 && oldVal.length == 0) {
+                    this.checkIndeterminate();
+                  }
+              },
+              immediate: true,
+          },
           'model.selected': {
               handler: function (val, oldVal) {
                   if (this.model.indeterminate) {
@@ -220,8 +223,11 @@
           },
           handleItemClick (e) {
               if (this.model.disabled) return
-              this.model.selected = !this.model.selected
               this.onItemClick(this, this.model, e)
+          },
+          handleCheckboxClick (e) {
+              if (this.model.disabled) return
+              this.model.selected = !this.model.selected
           },
           handleItemMouseOver () {
               this.isHover = true
