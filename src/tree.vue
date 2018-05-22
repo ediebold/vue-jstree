@@ -16,6 +16,8 @@
                        :draggable="draggable"
                        :drag-over-background-color="dragOverBackgroundColor"
                        :on-item-click="onItemClick"
+                       :on-checkbox-click="onCheckboxClick"
+                       :on-item-highlight="onItemHighlight"
                        :on-item-toggle="onItemToggle"
                        :on-item-drag-start="onItemDragStart"
                        :on-item-drag-end="onItemDragEnd"
@@ -68,7 +70,8 @@
         data() {
             return {
                 draggedItem: undefined,
-                draggedElm: undefined
+                draggedElm: undefined,
+                highlightedItems: [],
             }
         },
         computed: {
@@ -119,6 +122,7 @@
                     this.opened = item.opened || collapse
                     this.selected = item.selected || false
                     this.indeterminate = item.indeterminate || false
+                    this.highlighted = item.highlighted || false
                     this.disabled = item.disabled || false
                     this.loading = item.loading || false
                     this[childrenFieldName] = item[childrenFieldName] || []
@@ -183,6 +187,18 @@
                 }
             },
             onItemClick(oriNode, oriItem, e) {
+                this.$emit('item-click', oriNode, oriItem, e)
+            },
+            onItemHighlight(oriNode, oriItem) {
+                let index = this.$data.highlightedItems.map(function(e) { return e.id; }).indexOf(oriItem.id);
+                if (oriItem.highlighted && index <= -1) {
+                    this.$data.highlightedItems.push(oriItem)
+                } else if (!oriItem.highlighted && index > -1) {
+                    this.$data.highlightedItems.splice(index, 1)
+                }
+                this.$emit('item-highlight', oriNode, oriItem)
+            },
+            onCheckboxClick(oriNode, oriItem, e) {
                 if (this.multiple) {
                     if (this.allowBatch) {
                         this.handleBatchSelectItems(oriNode, oriItem)
@@ -190,7 +206,7 @@
                 } else {
                     this.handleSingleSelectItems(oriNode, oriItem)
                 }
-                this.$emit('item-click', oriNode, oriItem, e)
+                this.$emit('item-checkbox-click', oriNode, oriItem, e)
             },
             handleSingleSelectItems(oriNode, oriItem) {
                 this.handleRecursionNodeChilds(this, node => {

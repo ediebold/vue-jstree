@@ -33,6 +33,8 @@
                        :draggable="draggable"
                        :drag-over-background-color="dragOverBackgroundColor"
                        :on-item-click="onItemClick"
+                       :on-checkbox-click="onCheckboxClick"
+                       :on-item-highlight="onItemHighlight"
                        :on-item-toggle="onItemToggle"
                        :on-item-drag-start="onItemDragStart"
                        :on-item-drag-end="onItemDragEnd"
@@ -65,6 +67,12 @@
           draggable: {type: Boolean, default: false},
           dragOverBackgroundColor: {type: String},
           onItemClick: {
+              type: Function, default: () => false
+          },
+          onCheckboxClick: {
+              type: Function, default: () => false
+          },
+          onItemHighlight: {
               type: Function, default: () => false
           },
           onItemToggle: {
@@ -103,6 +111,9 @@
           },
           'model.opened': {
               handler: function (val, oldVal) {
+                  if (!val) {
+                      this.rehighlightChildren(this.model.highlighted)
+                  }
                   this.onItemToggle(this, this.model)
                   this.handleGroupMaxHeight()
               },
@@ -119,7 +130,7 @@
           },
           'model.selected': {
               handler: function (val, oldVal) {
-                  if (this.model.indeterminate) {
+                  if (this.model.indeterminate && val) {
                     this.model.indeterminate = false;
                     return;
                   }
@@ -136,7 +147,23 @@
                   }
               },
               immediate: true,
-          }
+          },
+          'model.highlighted': {
+              handler: function (val, oldVal) {
+                  if (!this.model.ignoreHighlightPropagation) {
+                    this.rehighlightChildren(val);
+                  } else {
+                      delete this.model.ignoreHighlightPropagation
+                  }
+                  if (this.$parent.$options._componentTag === 'tree-item' && !this.model.ignoreUpwardHighlightPropagation) { 
+                    this.$parent.checkChildrenHighlight()
+                  } else if (this.model.ignoreUpwardHighlightPropagation) {
+                      delete this.model.ignoreHighlightPropagation
+                  }
+                  this.handleItemHighlight();
+              },
+              immediate: true,
+          },
       },
       computed: {
           isFolder () {
@@ -158,14 +185,15 @@
               return [
                   {'tree-anchor': true},
                   {'tree-disabled': this.model.disabled},
-                  {'tree-selected': this.model.selected},
+                  {'tree-checked': this.model.selected},
+                  {'tree-clicked': this.model.highlighted},
                   {'tree-hovered': this.isHover}
               ]
           },
           wholeRowClasses () {
               return [
                   {'tree-wholerow': true},
-                  {'tree-wholerow-clicked': this.model.selected},
+                  {'tree-wholerow-clicked': this.model.highlighted},
                   {'tree-wholerow-hovered': this.isHover}
               ]
           },
@@ -223,11 +251,17 @@
           },
           handleItemClick (e) {
               if (this.model.disabled) return
+              this.model.highlighted = !this.model.highlighted
               this.onItemClick(this, this.model, e)
           },
           handleCheckboxClick (e) {
               if (this.model.disabled) return
               this.model.selected = !this.model.selected
+              this.onCheckboxClick(this, this.model, e)
+              e.stopPropagation();
+          },
+          handleItemHighlight () {
+              this.onItemHighlight(this, this.model)
           },
           handleItemMouseOver () {
               this.isHover = true
@@ -257,6 +291,36 @@
             }
             this.model.indeterminate = false;
             this.model.selected = state;
+          },
+          rehighlightChildren(newVal){
+              for (let child of this.$children) {
+                  child.model.highlighted = newVal;
+                  child.rehighlightChildren(newVal);
+              }
+          },
+          checkChildrenHighlight() {
+            if (!this.isFolder) return;
+            let childrenHighlighted = true;
+            for (let child of this.$children) {
+                if (!child.model.highlighted) {
+                    childrenHighlighted = false;
+                    break;
+                }
+            }
+            if (childrenHighlighted != this.model.highlighted) {
+                this.model.ignoreHighlightPropagation = true;
+                this.model.highlighted = childrenHighlighted;
+            }
+          },
+          delete() {
+              this.model.ignoreUpwardHighlightPropagation = true;
+              this.model.highlighted = false;
+              for (let child of this.$children) {
+                child.delete();
+              }
+              this.$nextTick(() => {
+                this.parentItem.splice(this.parentItem.indexOf(this.model), 1)
+              })
           }
       },
       created () {
@@ -284,6 +348,6 @@
       },
       mounted () {
           this.handleGroupMaxHeight()
-      }
+      },
   }
 </script>

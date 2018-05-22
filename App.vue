@@ -20,7 +20,15 @@
                               @item-drag-end="itemDragEnd"
                               @item-drop-before = "itemDropBefore"
                               @item-drop="itemDrop"
-                              ref="tree"></v-jstree>
+                              ref="tree">
+                        <template slot-scope="_">
+                            <div style="display: inherit; width: 200px" @click.ctrl="customItemClickWithCtrl">
+                                <i :class="_.vm.themeIconClasses" role="presentation" v-if="!_.model.loading"></i>
+                                {{_.model.text}}
+                                <button style="border: 0px; background-color: transparent; cursor: pointer;" @click="customItemClick(_.vm, _.model, $event)"><i class="fa fa-remove"></i></button>
+                            </div>
+                        </template>          
+                    </v-jstree>
 
                     <br>
                     <span style="float: left; background-color: red; color: #fff; padding: 6px" draggable="true">
@@ -100,7 +108,7 @@
                 </table>
             </div>
         </div>
-        <h2>Async Loading</h2>
+        <!-- <h2>Async Loading</h2>
         <div>
             <div style="width:840px; margin: 0 auto;">
                 <div style="width:49%; display:inline-block; vertical-align: top;">
@@ -177,7 +185,7 @@
                     </textarea>
                 </div>
             </div>
-        </div>
+        </div> -->
     </div>
 </template>
 
@@ -375,7 +383,8 @@
                     {"text": "root"}
                 ],
                 filesToAdd: 1,
-                filesToAddIndex: 0
+                filesToAddIndex: 0,
+                count : 0,
             }
         },
         methods: {
@@ -439,8 +448,9 @@
             addChildNode: function () {
                 if (this.editingItem.id !== undefined) {
                     this.editingItem.addChild({
-                        text: "newNode"
+                        text: "newNode" + this.$data.count
                     })
+                    this.$data.count += 1;
                 }
             },
             removeNode: function () {
@@ -481,8 +491,7 @@
             },
             customItemClick: function (node ,item, e) {
                 e.stopPropagation()
-                var index = node.parentItem.indexOf(item)
-                node.parentItem.splice(index, 1)
+                node.delete()
             },
             customItemClickWithCtrl: function () {
                 console.log('click + ctrl')
