@@ -9,8 +9,8 @@
         @dragleave.stop.prevent="isDragEnter = false"
         @drop.stop.prevent="handleItemDrop($event, _self, _self.model)">
         <div role="presentation" :class="wholeRowClasses" v-if="isWholeRow">&nbsp;</div>
-        <i class="tree-icon tree-ocl" role="presentation" @click="handleItemToggle"></i>
-        <div :class="anchorClasses" v-on="events">
+        <i class="tree-icon tree-ocl" role="presentation" @click="handleItemToggle"></i
+        ><div :class="anchorClasses" v-on="events">
             <i class="tree-icon tree-checkbox" role="presentation" v-if="showCheckbox && !model.loading" @click="handleCheckboxClick"></i>
             <slot :vm="this" :model="model">
                 <i :class="themeIconClasses" role="presentation" v-if="!model.loading"></i>

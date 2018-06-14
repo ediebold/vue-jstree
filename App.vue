@@ -20,7 +20,8 @@
                               @item-drag-end="itemDragEnd"
                               @item-drop-before = "itemDropBefore"
                               @item-drop="itemDrop"
-                              ref="tree">
+                              ref="tree"
+                              size="small">
                         <template slot-scope="_">
                             <div style="display: inherit; width: 200px" @click.ctrl="customItemClickWithCtrl">
                                 <i :class="_.vm.themeIconClasses" role="presentation" v-if="!_.model.loading"></i>
